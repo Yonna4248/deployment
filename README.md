@@ -114,7 +114,7 @@ kubectl get nodes
 # minikube   Ready    control-plane   30s   v1.xx.x
 ```
 
-### 1.4 Open Kubernetes Dashboard (optional)
+### 1.4 Open Kubernetes Dashboard
 
 ```bash
 minikube addons enable dashboard
