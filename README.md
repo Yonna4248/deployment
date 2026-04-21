@@ -201,6 +201,9 @@ Open `api/main.go` and review:
 ### 3.2 Build Docker Image
 
 ```bash
+# Set your Docker Hub username (use this for all subsequent commands)
+export DOCKER_USERNAME=<your-dockerhub-username>
+
 cd api
 
 # Download dependencies (generates go.sum)
@@ -209,7 +212,7 @@ go mod tidy
 cd ..
 
 # Build the image (multi-stage)
-docker build -t <DOCKER_USERNAME>/go-api:latest ./api
+docker build -t ${DOCKER_USERNAME}/go-api:latest ./api
 
 # Check image size (should be very small due to scratch base)
 docker images | grep go-api
@@ -231,7 +234,7 @@ docker run --rm -d -p 8081:8080 \
   -e DB_USER=postgres \
   -e DB_PASSWORD=postgres \
   -e DB_NAME=appdb \
-  <DOCKER_USERNAME>/go-api:latest
+  ${DOCKER_USERNAME}/go-api:latest
 
 # Test endpoints
 curl http://localhost:8081/livez
@@ -243,21 +246,20 @@ curl http://localhost:8081/items
 ### 3.4 Stop the container
 
 ```bash
-docker stop $(docker ps -q --filter ancestor=<DOCKER_USERNAME>/go-api:latest)
+docker stop $(docker ps -q --filter ancestor=${DOCKER_USERNAME}/go-api:latest)
 ```
 
 ### 3.4 Push Image to Docker Hub
 
 ```bash
 docker login
-docker push <DOCKER_USERNAME>/go-api:latest
+docker push ${DOCKER_USERNAME}/go-api:latest
 ```
 
 ### 3.5 Update Image Name in k8s/api-deployment.yaml
 
 ```bash
-# Replace DOCKER_USERNAME with your actual username
-sed -i "s/DOCKER_USERNAME/<YOUR_DOCKERHUB_USERNAME>/g" k8s/api-deployment.yaml
+sed -i "s/DOCKER_USERNAME/${DOCKER_USERNAME}/g" k8s/api-deployment.yaml
 ```
 
 ### 3.6 Deploy Go API
