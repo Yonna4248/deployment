@@ -28,17 +28,9 @@ jobs:
           cache: true
           cache-dependency-path: api/go.sum
 
-      - name: Download dependencies
-        working-directory: api
-        run: go mod tidy
-
       - name: Run tests
         working-directory: api
-        run: go test ./... -v -race
-
-      - name: Build binary (smoke test)
-        working-directory: api
-        run: go build -o /dev/null .
+        run: go test -mod=vendor ./... -v -race
 
   # ----------------------------------------------------------------
   # Job 2: Build & Push Docker Image
@@ -59,17 +51,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Set image tag
-        id: tag
-        run: echo "TAG=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-
       - name: Build & push image
         uses: docker/build-push-action@v5
         with:
           context: api
           push: true
           tags: |
-            ${{ steps.tag.outputs.TAG }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
 
   # ----------------------------------------------------------------
@@ -82,9 +70,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Update image in deployment
         run: |
           kubectl set image deployment/go-api \
