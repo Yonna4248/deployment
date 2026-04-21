@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -95,25 +96,25 @@ func initDB() {
 // ---------------------------------------------------------------------------
 
 func healthLive(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "alive"})
+	jsonResponse(c, http.StatusOK, gin.H{"status": "alive"})
 }
 
 func healthReady(c *gin.Context) {
 	if db != nil {
 		if err := db.Ping(); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{
+			jsonResponse(c, http.StatusServiceUnavailable, gin.H{
 				"status": "not ready",
 				"error":  "database unreachable",
 			})
 			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "ready"})
+	jsonResponse(c, http.StatusOK, gin.H{"status": "ready"})
 }
 
 func welcome(c *gin.Context) {
 	// TODO: เปลี่ยนข้อความนี้เพื่อทดสอบ CI/CD
-	c.JSON(http.StatusOK, gin.H{
+	jsonResponse(c, http.StatusOK, gin.H{
 		"message": "Hello from Go API v1.0.0 🚀",
 		"time":    time.Now().UTC(),
 	})
@@ -121,13 +122,13 @@ func welcome(c *gin.Context) {
 
 func getItems(c *gin.Context) {
 	if db == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database not connected"})
+		jsonResponse(c, http.StatusServiceUnavailable, gin.H{"error": "database not connected"})
 		return
 	}
 
 	rows, err := db.QueryContext(c.Request.Context(), "SELECT id, name FROM items ORDER BY id")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		jsonResponse(c, http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer rows.Close()
@@ -140,12 +141,12 @@ func getItems(c *gin.Context) {
 	for rows.Next() {
 		var it Item
 		if err := rows.Scan(&it.ID, &it.Name); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			jsonResponse(c, http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		items = append(items, it)
 	}
-	c.JSON(http.StatusOK, items)
+	jsonResponse(c, http.StatusOK, items)
 }
 
 // ---------------------------------------------------------------------------
@@ -205,6 +206,11 @@ func main() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+func jsonResponse(c *gin.Context, code int, obj any) {
+	b, _ := json.Marshal(obj)
+	c.Data(code, "application/json; charset=utf-8", append(b, '\n'))
+}
 
 func getEnv(key, fallback string) string {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
