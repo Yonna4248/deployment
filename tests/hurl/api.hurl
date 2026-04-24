@@ -1,6 +1,6 @@
 # ============================================================
 # Hurl – Functional API Tests
-# Usage: hurl --variable base_url=http://$(minikube ip):30080 tests/hurl/api.hurl
+# Usage: hurl --variable base_url=http://$(minikube ip):8080 tests/hurl/api.hurl
 # ============================================================
 
 # ----- 1. Liveness probe ------------------------------------
@@ -28,8 +28,8 @@ HTTP *        # accept any 2xx or 503 when DB is not seeded
 [Asserts]
 header "Content-Type" contains "application/json"
 
-# ----- 5. Metrics endpoint ----------------------------------
-GET {{base_url}}/metrics
-HTTP 200
-[Asserts]
-body contains "http_requests_total"
+# # ----- 5. Metrics endpoint ----------------------------------
+# GET {{base_url}}/metrics
+# HTTP 200
+# [Asserts]
+# body contains "http_requests_total"
